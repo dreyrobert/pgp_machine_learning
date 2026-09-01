@@ -97,6 +97,26 @@ A avaliação dos modelos deverá considerar métricas consolidadas para problem
 - RMSE;
 - MAPE.
 
+## Modelo treinado exportado
+
+O modelo baseline supervisionado exportado fica em:
+
+```text
+models/modelo_acidentes_rf_baseline_v1.joblib
+```
+
+O artefato foi gerado com `RandomForestRegressor` usando atributos de calendário, lags temporais e município, com somente meses completos do snapshot para evitar vazamento temporal. Os metadados da versão ficam em:
+
+```text
+models/modelo_acidentes_rf_baseline_v1_metadata.json
+```
+
+Para regenerar o modelo:
+
+```bash
+python3 src/train_export_model.py
+```
+
 ## Entregas esperadas
 
 - Base de dados tratada e filtrada para Santa Catarina;

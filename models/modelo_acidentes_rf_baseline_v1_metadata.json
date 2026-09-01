@@ -1,0 +1,100 @@
+{
+  "model_name": "RandomForestRegressor",
+  "model_version": "v1",
+  "feature_set_name": "calendario_lags_municipio",
+  "target": "qtd_acidentes",
+  "created_at_utc": "2026-09-01T23:23:39.853055+00:00",
+  "training_rows": 6731,
+  "training_start_month": "2022-01-01",
+  "training_end_month": "2026-05-01",
+  "cutoff_month": "2026-05-01",
+  "municipios": 127,
+  "numeric_features": [
+    "ano",
+    "mes",
+    "trimestre",
+    "eh_alta_temporada",
+    "tempo_idx",
+    "mes_sin",
+    "mes_cos",
+    "lag_acidentes_1m",
+    "lag_acidentes_2m",
+    "lag_acidentes_12m",
+    "media_movel_3m",
+    "media_movel_6m",
+    "acidentes_acum_ano_ate_mes_anterior",
+    "media_historica_municipio"
+  ],
+  "categorical_features": [
+    "municipio"
+  ],
+  "excluded_current_month_columns": [
+    "qtd_mortos",
+    "qtd_feridos_graves",
+    "qtd_feridos_leves",
+    "total_veiculos_envolvidos",
+    "taxa_severidade_acumulada"
+  ],
+  "backtest_metrics_by_year": [
+    {
+      "modelo": "RandomForestRegressor",
+      "versao": "v1",
+      "conjunto_atributos": "calendario_lags_municipio",
+      "ano_teste": 2023,
+      "n_treino": 1524,
+      "n_teste": 1524,
+      "MAE": 1.7323175100404988,
+      "RMSE": 2.611965410026586,
+      "MAPE_%_sem_zeros": 54.637073241539454,
+      "WAPE_%": 33.85115893450084,
+      "R2": 0.9075303813675156
+    },
+    {
+      "modelo": "RandomForestRegressor",
+      "versao": "v1",
+      "conjunto_atributos": "calendario_lags_municipio",
+      "ano_teste": 2024,
+      "n_treino": 3048,
+      "n_teste": 1524,
+      "MAE": 1.7103360394119034,
+      "RMSE": 2.667358303847795,
+      "MAPE_%_sem_zeros": 47.71974786374601,
+      "WAPE_%": 31.10072931707124,
+      "R2": 0.9163216590321559
+    },
+    {
+      "modelo": "RandomForestRegressor",
+      "versao": "v1",
+      "conjunto_atributos": "calendario_lags_municipio",
+      "ano_teste": 2025,
+      "n_treino": 4572,
+      "n_teste": 1524,
+      "MAE": 1.733305293896975,
+      "RMSE": 2.760734499568791,
+      "MAPE_%_sem_zeros": 49.671586409443265,
+      "WAPE_%": 32.26920679085011,
+      "R2": 0.9048867369780846
+    },
+    {
+      "modelo": "RandomForestRegressor",
+      "versao": "v1",
+      "conjunto_atributos": "calendario_lags_municipio",
+      "ano_teste": 2026,
+      "n_treino": 6096,
+      "n_teste": 635,
+      "MAE": 1.8495683700883496,
+      "RMSE": 3.01733889728929,
+      "MAPE_%_sem_zeros": 51.712409389554104,
+      "WAPE_%": 33.19604055981068,
+      "R2": 0.8940842344742932
+    }
+  ],
+  "backtest_metrics_mean": {
+    "MAE": 1.7563818033594318,
+    "RMSE": 2.764349277683116,
+    "MAPE_%_sem_zeros": 50.9352042260707,
+    "WAPE_%": 32.60428390055822,
+    "R2": 0.9057057529630124
+  },
+  "training_note": "Modelo final treinado somente com meses completos do snapshot. Atributos do mes atual relacionados a mortos, feridos e veiculos foram excluidos para reduzir vazamento temporal."
+}
