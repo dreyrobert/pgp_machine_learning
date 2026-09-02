@@ -1,0 +1,184 @@
+\documentclass[12pt]{article}
+
+\usepackage{sbc-template}
+\usepackage{graphicx,url}
+\usepackage[utf8]{inputenc}
+\usepackage[brazil]{babel}
+%\usepackage[latin1]{inputenc}  
+
+     
+\sloppy
+
+\title{Predição de Acidentes em Rodovias Federais de Santa Catarina por Meio de Séries Temporais e Aprendizado de Máquina}
+
+\author{Robert Biasoli Drey\inst{1}, Gabrielli Grossi Lara\inst{1}}
+
+
+\address{Universidade Federal da Fronteira Sul (UFFS)\\
+  Campus Chapecó -- Chapecó, SC -- Brasil
+}
+
+\begin{document} 
+
+\maketitle
+
+\begin{abstract}
+Traffic accidents on federal highways in Santa Catarina are a significant public health and economic concern. Highways such as BR-101, BR-470, and BR-282 carry heavy traffic and account for a substantial number of accidents. In this context, this study proposes the use of Machine Learning (ML) techniques to analyze and forecast, through time-series methods, the accidents recorded by the Brazilian Federal Highway Police (PRF) in Santa Catarina between 2022 and 2026. Based on the processing and selection of open government data, predictive models will be developed to estimate accident frequency across different road sections and periods. The study covers the main stages of an ML project, from data preparation to model evaluation, aiming to support the planning of preventive actions by the Federal Highway Police in Santa Catarina.
+
+\end{abstract}
+     
+\begin{resumo} 
+Os acidentes de trânsito nas rodovias federais de Santa Catarina constituem um problema relevante para a saúde pública e para a economia do estado. Rodovias como a BR-101, a BR-470 e a BR-282 possuem tráfego intenso e registram um número significativo de ocorrências. Nesse contexto, este trabalho propõe o uso de técnicas de Aprendizado de Máquina (\textit{Machine Learning} -- ML) para analisar e prever, por meio de séries temporais, os acidentes registrados pela Polícia Rodoviária Federal (PRF) em Santa Catarina entre 2022 e 2026. Com base no tratamento e na seleção dos dados abertos disponibilizados pelo governo, serão desenvolvidos modelos capazes de estimar a frequência dos acidentes em diferentes trechos e períodos. O trabalho contempla as principais etapas de um projeto de ML, desde a preparação dos dados até a avaliação dos modelos, com o objetivo de contribuir para o planejamento de ações preventivas da Superintendência da PRF em Santa Catarina.
+
+\end{resumo}
+\section{Introdução}
+
+As rodovias federais exercem uma função relevante na circulação de pessoas e mercadorias em Santa Catarina, conectando municípios, regiões industriais, áreas de produção agropecuária e acessos portuários. Entre as principais vias que atravessam o estado estão as rodovias BR-101, BR-116, BR-282 e BR-470. A intensidade dos deslocamentos realizados nessas vias também torna a segurança viária uma questão importante, uma vez que os sinistros de trânsito provocam mortes, lesões, danos materiais e interrupções no fluxo rodoviário.
+
+Além das consequências para as pessoas envolvidas, os sinistros geram custos associados ao atendimento de emergência, aos serviços de saúde, à perda de produção e aos danos aos veículos. Em 2014, os sinistros ocorridos nas rodovias federais brasileiras representaram um custo estimado de R\$ 12,8 bilhões para a sociedade \cite{ipea2015acidentes}. Uma atualização realizada pela Confederação Nacional do Transporte estimou que, em 2022, esses custos permaneceram próximos de R\$ 13 bilhões \cite{cnt2023acidentes}. Embora esses valores representem o cenário nacional, eles demonstram a dimensão econômica do problema e complementam os impactos humanos associados às ocorrências.
+
+A análise dos sinistros de trânsito também precisa considerar que sua distribuição não é uniforme ao longo do tempo e do território. Estudos realizados com dados das rodovias federais brasileiras identificaram diferenças temporais e regionais na ocorrência de vítimas e na gravidade dos registros \cite{moraisneto2021tendencia}. Aspectos relacionados ao período do ano, às características da via, às condições meteorológicas e ao fluxo de veículos podem contribuir para variações na quantidade de ocorrências. Por isso, a análise de dados históricos pode auxiliar na identificação de tendências, sazonalidades e diferenças entre os municípios atendidos pela malha rodoviária federal.
+
+A Polícia Rodoviária Federal (PRF) disponibiliza dados abertos sobre os sinistros registrados nas rodovias federais brasileiras. Os conjuntos publicados apresentam informações relacionadas à data e ao horário da ocorrência, ao município, à rodovia, às condições meteorológicas, às características da via e às pessoas e aos veículos envolvidos \cite{prf2026dados}. A disponibilidade desse histórico possibilita realizar análises temporais e geográficas, além de desenvolver modelos voltados à previsão da quantidade de ocorrências.
+
+Técnicas de Aprendizado de Máquina (\textit{Machine Learning} -- ML) já foram aplicadas a diferentes problemas relacionados à segurança viária, como a análise de sinistros, a identificação de pontos críticos \cite{santos2021machine}, a classificação de suas causas \cite{silva2024classificacao} e a predição de gravidade \cite{mafort2025tecnicas}. Entretanto, esses problemas diferem da previsão da quantidade de sinistros futuros, que exige preservar a ordem temporal dos dados e considerar possíveis tendências e padrões sazonais.
+
+Este trabalho propõe o desenvolvimento e a avaliação de modelos de séries temporais e de ML para prever a quantidade de sinistros no mês seguinte, considerando como unidade de análise cada combinação entre município e mês. Serão utilizados os registros disponibilizados pela PRF entre janeiro de 2022 e maio de 2026, filtrados para os municípios de Santa Catarina com ocorrências em rodovias federais. Diferentes abordagens preditivas serão comparadas por meio de validação temporal, com o objetivo de verificar sua capacidade de representar os padrões observados no histórico de cada município.
+
+\subsection{Problema de pesquisa}
+
+Os dados históricos da PRF permitem analisar como os sinistros estão distribuídos entre os municípios catarinenses e ao longo do tempo. A realização de previsões, entretanto, envolve desafios relacionados às diferenças na quantidade de registros entre os municípios, à presença de períodos com poucas ou nenhuma ocorrência e às possíveis tendências e variações sazonais da série histórica. Além disso, a avaliação dos modelos deve respeitar a ordem temporal dos dados, evitando que informações posteriores ao período previsto sejam utilizadas durante o treinamento.
+
+Com base nesse problema, este trabalho busca responder à seguinte questão de pesquisa:
+
+\begin{quote}
+De que forma modelos de séries temporais e Aprendizado de Máquina podem ser utilizados para prever a frequência mensal de sinistros nas rodovias federais dos municípios de Santa Catarina?
+\end{quote}
+
+\subsection{Objetivos}
+
+\subsubsection{Objetivo geral}
+
+Desenvolver e avaliar modelos preditivos para estimar a quantidade de sinistros de trânsito no mês seguinte, considerando os registros das rodovias federais por município de Santa Catarina e os dados abertos da Polícia Rodoviária Federal referentes ao período de 2022 a 2026.
+
+\subsubsection{Objetivos específicos}
+
+\begin{itemize}
+    \item coletar os dados abertos de sinistros disponibilizados pela PRF para o período analisado;
+
+    \item selecionar, integrar e padronizar os registros referentes às rodovias federais nos municípios de Santa Catarina;
+
+    \item realizar a limpeza, a transformação e a agregação dos dados por município e mês;
+
+    \item analisar a distribuição temporal e geográfica dos sinistros, observando tendências, padrões sazonais e diferenças na quantidade de ocorrências entre os municípios;
+
+    \item construir atributos temporais e históricos adequados à previsão da quantidade de sinistros no mês seguinte;
+
+    \item desenvolver e comparar modelos de séries temporais e de Aprendizado de Máquina;
+
+    \item avaliar o desempenho preditivo dos modelos por meio de validação temporal e de métricas adequadas à previsão de contagens;
+
+    \item disponibilizar os dados processados, os códigos e os demais artefatos produzidos, de modo a favorecer a reprodução dos experimentos.
+\end{itemize}
+
+\subsection{Justificativa}
+
+A realização deste estudo justifica-se pelos impactos humanos, sociais e econômicos associados aos sinistros ocorridos nas rodovias federais. Além das mortes e lesões, essas ocorrências geram despesas médicas, perda de produção, danos materiais e custos relacionados ao atendimento e à interrupção do tráfego \cite{ipea2015acidentes,cnt2023acidentes}. Em Santa Catarina, onde as rodovias federais conectam diferentes regiões do estado e dão suporte ao deslocamento de pessoas e mercadorias, compreender a distribuição dessas ocorrências pode contribuir para a análise da segurança viária.
+
+O uso de dados históricos para prever a quantidade mensal de sinistros pode complementar as análises descritivas realizadas sobre essas ocorrências. Enquanto uma análise descritiva permite compreender o que ocorreu em determinado período, os modelos preditivos buscam estimar o comportamento futuro com base nos padrões presentes nos registros anteriores. Essas previsões não determinam onde um sinistro ocorrerá nem estabelecem relações de causalidade, mas podem indicar municípios e períodos para os quais os modelos estimam maior quantidade de registros.
+
+Caso apresentem desempenho adequado, os resultados poderão servir como informação complementar para estudos e atividades de planejamento relacionadas à segurança viária. Entre as aplicações possíveis estão o apoio à análise da distribuição temporal das ocorrências e à definição de períodos ou localidades que mereçam investigação mais detalhada. A utilidade prática dessas previsões, entretanto, dependerá da qualidade dos dados, do desempenho dos modelos e da consideração de informações que não estejam disponíveis na base utilizada.
+
+Do ponto de vista acadêmico, o trabalho permite aplicar as etapas de um projeto de Ciência de Dados a um problema real, incluindo aquisição, preparação e exploração dos dados, construção de atributos, treinamento, validação temporal e avaliação dos modelos. O estudo também se diferencia de trabalhos voltados principalmente à classificação de causas ou gravidade \cite{silva2024classificacao,mafort2025tecnicas} e à identificação de pontos críticos \cite{santos2021machine}, pois concentra-se na previsão da quantidade mensal de sinistros por município. Por fim, a disponibilização dos artefatos produzidos busca favorecer a transparência e a reprodução dos experimentos.
+
+\section{Fundamentação Teórica}
+
+Esta seção apresenta os conceitos utilizados para compreender o problema investigado e orientar o desenvolvimento dos modelos preditivos. São abordados os dados de sinistros disponibilizados pela Polícia Rodoviária Federal (PRF), os principais conceitos relacionados a séries temporais e a aplicação de técnicas de Aprendizado de Máquina à segurança viária.
+
+\subsection{Sinistros de trânsito e dados abertos da PRF}
+
+Os sinistros de trânsito constituem um problema de segurança viária com consequências humanas, sociais e econômicas. Além das mortes e lesões, essas ocorrências geram custos relacionados ao atendimento de emergência, aos serviços de saúde, à perda de produção e aos danos materiais. Em 2014, os sinistros ocorridos nas rodovias federais brasileiras representaram um custo estimado de R\$ 12,8 bilhões para a sociedade \cite{ipea2015acidentes}. Para 2022, uma atualização divulgada pela Confederação Nacional do Transporte estimou custos próximos de R\$ 13 bilhões \cite{cnt2023acidentes}.
+
+A distribuição dos sinistros e de suas consequências não ocorre de forma uniforme ao longo do tempo e do território. A análise das rodovias federais brasileiras realizada por \cite{moraisneto2021tendencia} identificou variações temporais e regionais no número de vítimas. Essas diferenças indicam a necessidade de considerar tanto o período quanto o recorte geográfico ao analisar os registros de segurança viária.
+
+A PRF disponibiliza dados abertos sobre os sinistros registrados nas rodovias federais brasileiras. Os conjuntos publicados apresentam informações relacionadas à data, ao horário e ao local da ocorrência, além de características da via, condições meteorológicas, causas presumíveis e dados sobre veículos e pessoas envolvidas \cite{prf2026dados}. Os arquivos estão disponíveis em diferentes formas de agrupamento, incluindo registros agrupados por ocorrência e por pessoa.
+
+Neste trabalho, serão utilizados os arquivos agrupados por ocorrência, pois a variável de interesse corresponde à quantidade de sinistros, e não à quantidade de pessoas ou veículos envolvidos. Após a seleção dos registros de Santa Catarina, os dados serão agregados por município e mês. Dessa forma, cada observação representará a quantidade de sinistros registrada nas rodovias federais de um município durante determinado mês.
+
+\subsection{Séries temporais e previsão}
+
+Uma série temporal é formada por observações ordenadas ao longo do tempo. Seu comportamento pode apresentar componentes como tendência, sazonalidade e variações irregulares. A tendência representa mudanças de longo prazo, enquanto a sazonalidade corresponde a padrões que se repetem em intervalos regulares \cite{hyndman2021forecasting}.
+
+No problema investigado, a variável temporal será a quantidade mensal de sinistros registrada em cada município. A análise exploratória buscará verificar a existência de tendências, padrões sazonais e diferenças na distribuição das ocorrências. A identificação dessas características será utilizada para orientar a preparação dos dados e a escolha dos modelos.
+
+Os modelos de séries temporais utilizam informações de períodos anteriores para realizar previsões futuras. Entre as abordagens estatísticas aplicáveis estão os modelos autorregressivos, os modelos ARIMA e suas extensões sazonais. A definição dos modelos utilizados neste trabalho será realizada após a análise exploratória das séries.
+
+Também serão utilizados modelos de referência, ou \textit{baselines}, para estabelecer um nível mínimo de desempenho. Uma estratégia simples consiste em utilizar como previsão o valor observado no período anterior. Para séries que apresentam sazonalidade, outra possibilidade é utilizar o valor registrado no mesmo mês do ano anterior. A comparação com esses modelos permitirá verificar se abordagens mais complexas produzem ganhos efetivos de desempenho \cite{hyndman2021forecasting}.
+
+A avaliação de previsões temporais deve respeitar a ordem cronológica dos dados. Uma divisão aleatória pode permitir que informações posteriores sejam utilizadas no treinamento de modelos destinados a prever períodos anteriores. Por esse motivo, serão utilizados conjuntos de treinamento e teste separados temporalmente ou uma estratégia de avaliação com origem deslizante, na qual o período de treinamento avança ao longo da série \cite{bergmeir2018crossvalidation,hyndman2021forecasting}.
+
+\subsection{Aprendizado de Máquina aplicado à segurança viária}
+
+Técnicas de ML têm sido utilizadas para identificar padrões em dados de segurança viária e apoiar diferentes tarefas preditivas. Entre as aplicações encontradas na literatura estão a análise de ocorrências e a identificação de pontos críticos \cite{santos2021machine}, a classificação das causas dos sinistros \cite{silva2024classificacao} e a predição de sua gravidade \cite{mafort2025tecnicas}.
+
+Em problemas de previsão temporal, algoritmos de ML podem utilizar atributos construídos a partir do histórico da variável. Entre os possíveis atributos estão valores defasados, médias móveis, mês e ano. Esses atributos permitem representar parte da dependência temporal em um formato que possa ser processado por algoritmos de regressão.
+
+A construção dos atributos precisa considerar o momento em que a previsão será realizada. Para prever a quantidade de sinistros de determinado mês, somente poderão ser utilizadas informações disponíveis até o mês anterior. Essa restrição evita o vazamento de dados, situação em que o modelo utiliza informações que não estariam disponíveis em uma aplicação real.
+
+A previsão de quantidade também se diferencia de problemas de classificação. Na classificação de gravidade ou causas, o objetivo é atribuir uma categoria a uma ocorrência. Neste trabalho, a variável de resposta será uma contagem mensal agregada por município. Portanto, os modelos e as métricas de avaliação deverão ser adequados a uma variável numérica que pode apresentar valores baixos ou iguais a zero.
+
+\section{Trabalhos Relacionados}
+
+Diferentes estudos utilizaram métodos estatísticos e técnicas de ML para investigar problemas relacionados aos sinistros de trânsito. As aplicações encontradas incluem análise de ocorrências, identificação de pontos críticos, classificação de causas, predição de gravidade e previsão de quantidades ao longo do tempo.
+
+\cite{santos2021machine} apresenta abordagens de ML aplicadas à análise de sinistros e à identificação de pontos críticos. O estudo considera a distribuição espacial das ocorrências para reconhecer regiões que apresentam maior concentração de registros. Embora também utilize dados históricos, seu objetivo difere do presente trabalho, que busca prever a quantidade mensal de sinistros por município.
+
+No contexto brasileiro, \cite{silva2024classificacao} utilizaram técnicas de ML para classificar causas de sinistros ocorridos em rodovias de Minas Gerais. Os autores trataram o problema como uma tarefa de classificação, na qual os algoritmos buscam associar cada registro a uma categoria de causa.
+
+De forma semelhante, \cite{mafort2025tecnicas} avaliaram técnicas de ML para predizer a gravidade de sinistros em rodovias do estado do Rio de Janeiro. Nesse caso, o objetivo também corresponde à classificação de ocorrências individuais. Esses trabalhos demonstram a possibilidade de aplicação de ML a dados rodoviários brasileiros, mas não investigam diretamente a previsão temporal da quantidade de registros.
+
+A evolução temporal das consequências dos sinistros nas rodovias federais brasileiras foi analisada por \cite{moraisneto2021tendencia}. O estudo investigou tendências no número de vítimas antes e depois da Década de Ação pela Segurança no Trânsito. Seus resultados demonstram a relevância da dimensão temporal para compreender mudanças nos registros, embora o trabalho não tenha como objetivo produzir previsões mensais por município.
+
+Em uma aplicação voltada à previsão de contagens, \cite{getahun2021timeseries} utilizou registros mensais da região de Amhara, na Etiópia, para modelar as quantidades de sinistros, ocorrências fatais e casos com vítimas. O estudo aplicou modelos ARIMA para representar os padrões temporais e gerar previsões. Entretanto, os registros foram analisados de forma agregada para a região, sem considerar séries distintas para cada município ou comparar os modelos estatísticos com algoritmos de ML.
+
+Os trabalhos analisados mostram que métodos estatísticos e técnicas de ML podem ser aplicados a diferentes problemas de segurança viária. O presente estudo diferencia-se pela previsão da quantidade de sinistros no mês seguinte, considerando como unidade de análise cada combinação entre município e mês. Além disso, serão utilizados dados das rodovias federais de Santa Catarina, modelos de referência e uma estratégia de avaliação que preservará a ordem temporal das observações.
+
+\section{Metodologia}
+
+Esta pesquisa possui caráter aplicado e será conduzida com base na \textit{Design Science Research Methodology} (DSRM). Essa metodologia orienta pesquisas voltadas à criação e à avaliação de artefatos destinados a solucionar problemas identificados em determinado contexto. O processo proposto por \cite{peffers2007dsrm} é composto por seis atividades: identificação do problema e motivação, definição dos objetivos da solução, design e desenvolvimento, demonstração, avaliação e comunicação.
+
+O artefato desenvolvido neste trabalho será um processo computacional para preparar os dados da PRF, treinar e avaliar modelos preditivos e gerar estimativas da quantidade mensal de sinistros por município. O artefato compreenderá a base processada, o fluxo de preparação e construção de atributos, os modelos treinados, o procedimento de avaliação temporal e uma aplicação para visualização dos resultados.
+
+\subsection{Identificação do problema e objetivos da solução}
+
+A primeira atividade da DSRM corresponde à identificação do problema e à apresentação de sua relevância. O problema delimitado neste trabalho é a previsão da quantidade de sinistros que será registrada no mês seguinte nas rodovias federais de cada município de Santa Catarina. Embora os dados históricos da PRF permitam realizar análises descritivas, sua utilização para previsão exige procedimentos que considerem as diferenças entre os municípios e a dependência temporal das observações.
+
+A motivação para o desenvolvimento do artefato está relacionada aos impactos humanos e econômicos dos sinistros e à possibilidade de utilizar dados públicos para produzir informações complementares às análises de segurança viária. O artefato não buscará determinar as causas das ocorrências nem indicar exatamente onde um sinistro acontecerá. Seu objetivo será estimar a quantidade mensal esperada a partir dos padrões presentes no histórico.
+
+A segunda atividade consiste na definição dos objetivos da solução. O artefato deverá integrar os registros da PRF referentes a Santa Catarina, organizar as observações por município e mês e gerar previsões para o mês seguinte. Também deverá possibilitar a comparação entre modelos preditivos, preservar a ordem temporal dos dados durante os experimentos e permitir a reprodução dos resultados.
+
+\subsection{Design e desenvolvimento do artefato}
+
+A terceira atividade da DSRM corresponde ao design e ao desenvolvimento do artefato. Inicialmente, serão coletados os arquivos agrupados por ocorrência disponibilizados pela PRF para o período de janeiro de 2017 a [INSERIR MÊS DA COLETA] de 2026. Em seguida, serão selecionados os registros das rodovias federais localizados em municípios de Santa Catarina.
+
+Os dados passarão por procedimentos de integração, padronização, tratamento de valores ausentes e duplicidades e verificação da consistência dos campos utilizados. O último mês disponível de 2026 somente será incluído caso esteja completo. Se a coleta ocorrer antes do encerramento do mês, os registros desse período serão removidos da modelagem ou tratados conforme uma regra definida antes dos experimentos.
+
+Após a preparação inicial, os sinistros serão agregados por município e mês. Será construído um calendário mensal para representar explicitamente os períodos sem ocorrências, quando aplicável. A inclusão desses períodos com valor zero será necessária para preservar a continuidade das séries temporais e distinguir ausência de ocorrência de ausência de dados.
+
+A análise exploratória será utilizada para examinar a distribuição das contagens, a quantidade de observações disponíveis para cada município e a presença de tendências, sazonalidades e valores atípicos. Essa análise também auxiliará na definição de critérios para inclusão dos municípios, especialmente nos casos em que houver poucos registros durante o período analisado.
+
+A partir da base mensal, poderão ser construídos atributos de calendário, valores defasados e estatísticas móveis. Todos os atributos serão calculados utilizando somente informações anteriores ao mês previsto. Esse cuidado será adotado para impedir o vazamento de dados durante o treinamento e a avaliação.
+
+Serão desenvolvidos modelos de referência, modelos de séries temporais e algoritmos de ML. A seleção final será definida após a análise exploratória:
+
+\begin{itemize}
+    \item modelos de referência: [CONFIRMAR BASELINES];
+    \item modelos de séries temporais: [CONFIRMAR MODELOS];
+    \item algoritmos de Aprendizado de Máquina: [CONFIRMAR MODELOS].
+\end{itemize}
+
+\nocite{*}
+\bibliographystyle{sbc}
+\bibliography{sbc-template}
+
+\end{document}
