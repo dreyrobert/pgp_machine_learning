@@ -51,7 +51,7 @@ UF = SC
 O período histórico considerado no artigo compreende:
 
 ```text
-2017 a 2026
+2022 a 2026
 ```
 
 Os arquivos anuais serão consolidados durante a etapa de preparação dos dados, formando uma base histórica única para análise exploratória, modelagem temporal e visualização.
