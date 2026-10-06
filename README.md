@@ -180,7 +180,10 @@ cache invalidado quando os arquivos mudam.
 ## Deploy no Streamlit Community Cloud
 
 O repositório público é https://github.com/dreyrobert/pgp_machine_learning.
-O link público da aplicação será registrado aqui após a confirmação do deploy.
+**Aplicação pública:** https://acidentes-sc-pgp.streamlit.app/
+
+Deploy realizado em 06/10/2026 no Streamlit Community Cloud, com Python 3.12.
+Acesso público habilitado e previsão com gráfico verificada no ambiente online.
 
 1. Acesse https://share.streamlit.io/ e entre na conta vinculada ao GitHub.
 2. Selecione **Create app** e a opção de deploy a partir de um repositório existente.
