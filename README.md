@@ -199,3 +199,19 @@ estão fixadas nas versões validadas localmente em `requirements.txt`.
 Novos commits na branch de deploy são utilizados pelo Community Cloud para
 atualizar a aplicação. Consulte a
 [documentação oficial de deploy](https://docs.streamlit.io/deploy/streamlit-community-cloud/deploy-your-app/deploy).
+
+## Artigo científico
+
+O fonte atualizado do artigo está em
+[article/third_version.tex](article/third_version.tex), com a seção
+**Adequação do projeto ao CRISP-ML(Q)** imediatamente após a Metodologia.
+A seção relaciona as seis fases às entregas e ao MVP público, distinguindo
+os controles implementados das atividades propostas de monitoramento e manutenção.
+
+As novas referências estão em
+[article/crisp-ml-references.bib](article/crisp-ml-references.bib).
+Ao atualizar o projeto no Overleaf, copie ambos os arquivos. O LaTeX utiliza
+`\bibliography{sbc-template,crisp-ml-references}` e requer também os arquivos
+originais `sbc-template.sty`, `sbc.bst` e `sbc-template.bib`, que não estão
+incluídos neste repositório. O resumo e o abstract do fonte ainda contêm
+marcadores de atualização e precisam de revisão antes da versão final do artigo.

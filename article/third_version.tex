@@ -1,0 +1,276 @@
+\documentclass[12pt]{article}
+
+\usepackage{sbc-template}
+\usepackage{graphicx,url}
+\usepackage[utf8]{inputenc}
+\usepackage[brazil]{babel}
+\usepackage{amsmath}
+\usepackage{comment}
+%\usepackage[latin1]{inputenc}
+
+\sloppy
+
+\title{Predição de Acidentes em Rodovias Federais de Santa Catarina por Meio de Aprendizado de Máquina com Atributos Temporais}
+
+\author{Robert Biasoli Drey\inst{1}, Gabrielli Grossi Lara\inst{1}}
+
+
+\address{Universidade Federal da Fronteira Sul (UFFS)\\
+  Campus Chapecó -- Chapecó, SC -- Brasil
+}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Need correction.
+
+\end{abstract}
+
+\begin{resumo}
+Precisa atualizar
+
+\end{resumo}
+
+\section{Introdução}
+
+As rodovias federais exercem uma função relevante na circulação de pessoas e mercadorias em Santa Catarina, conectando municípios, regiões industriais, áreas de produção agropecuária e acessos portuários. Ao mesmo tempo, os sinistros de trânsito registrados nessas vias provocam mortes, lesões, danos materiais e interrupções no fluxo rodoviário. Em 2014, os sinistros ocorridos nas rodovias federais brasileiras representaram um custo estimado de R\$ 12,8 bilhões para a sociedade \cite{ipea2015acidentes}. Para 2022, uma atualização realizada pela Confederação Nacional do Transporte estimou custos próximos de R\$ 13 bilhões \cite{cnt2023acidentes}. Embora esses valores representem o cenário nacional, eles demonstram a dimensão econômica do problema e complementam seus impactos humanos e sociais.
+
+A distribuição dos sinistros não ocorre de maneira uniforme entre as regiões ou ao longo do tempo. Análises realizadas com dados das rodovias federais brasileiras identificaram variações temporais e regionais no número de vítimas \cite{moraisneto2021tendencia}. Além disso, fatores como volume de tráfego, características da via, condições meteorológicas e período do ano podem estar associados a diferenças na quantidade de registros. A análise do histórico das ocorrências permite examinar essas variações e identificar tendências e padrões sazonais relevantes para a segurança viária.
+
+A Polícia Rodoviária Federal (PRF) disponibiliza dados abertos sobre os sinistros registrados nas rodovias federais brasileiras, incluindo informações temporais, geográficas e características das ocorrências \cite{prf2026dados}. Esses registros permitem realizar análises descritivas e também construir modelos voltados à previsão da quantidade de sinistros. Entretanto, a previsão exige procedimentos específicos para representar a dependência temporal dos dados e impedir que informações futuras sejam utilizadas durante o treinamento dos modelos.
+
+Técnicas de Aprendizado de Máquina (\textit{Machine Learning} -- ML), por exemplo, já foram utilizadas na identificação de pontos críticos \cite{santos2021machine}, na classificação das causas dos sinistros \cite{silva2024classificacao} e na predição de sua gravidade \cite{mafort2025tecnicas}. Também existem aplicações de modelos de séries temporais voltadas à previsão de quantidades mensais de sinistros \cite{getahun2021timeseries}. Contudo, essas tarefas diferem quanto à variável prevista, à unidade de análise e ao recorte geográfico adotado.
+
+Neste estudo, o problema foi formulado como uma tarefa de regressão supervisionada com dependência temporal. Os registros individuais da PRF foram agregados por município e mês, e atributos derivados do histórico foram utilizados para estimar a quantidade de sinistros no mês seguinte. A avaliação foi realizada por meio de janelas temporais expansivas, nas quais os modelos são treinados com períodos anteriores e testados em períodos posteriores. Essa organização busca reproduzir as informações que estariam disponíveis no momento de uma previsão e reduzir o risco de vazamento temporal.
+
+A partir dessa delimitação, busca-se responder à seguinte questão de pesquisa: de que forma modelos de Aprendizado de Máquina com atributos temporais podem ser utilizados para prever a frequência mensal de sinistros nas rodovias federais dos municípios de Santa Catarina?
+
+Este artigo tem como objetivo desenvolver e avaliar modelos preditivos para estimar a quantidade de sinistros de trânsito registrada no mês seguinte nas rodovias federais dos municípios de Santa Catarina, utilizando dados abertos da PRF referentes ao período de janeiro de 2022 a maio de 2026.
+
+
+\section{Fundamentação teórica}
+
+Uma série temporal é composta por observações organizadas segundo sua ordem de ocorrência. Seu comportamento pode apresentar componentes como tendência, sazonalidade e variações irregulares. A tendência representa mudanças de longo prazo, enquanto a sazonalidade corresponde a padrões que se repetem em intervalos regulares \cite{hyndman2021forecasting}.
+
+Problemas de previsão temporal buscam utilizar observações anteriores para estimar valores futuros. Além dos modelos estatísticos específicos para séries temporais, algoritmos de ML podem ser empregados por meio da construção de atributos derivados do histórico. Entre esses atributos estão os valores defasados, as médias móveis e as variáveis de calendário, que permitem representar parte da dependência temporal em um formato adequado a modelos de regressão.
+
+A construção desses atributos deve respeitar o momento em que a previsão é realizada. Para estimar o valor de determinado período, somente podem ser empregadas informações disponíveis até os períodos anteriores. O uso de dados posteriores caracteriza vazamento temporal e pode produzir estimativas excessivamente otimistas sobre o desempenho do modelo.
+
+A mesma restrição deve ser observada na divisão dos dados para treinamento e teste. Em séries temporais, uma separação aleatória pode permitir que observações futuras sejam utilizadas no treinamento de modelos avaliados em períodos anteriores. Por esse motivo, são recomendadas estratégias que preservem a ordem cronológica, como a separação temporal entre treinamento e teste e a avaliação com origem deslizante ou janelas expansivas \cite{bergmeir2018crossvalidation,hyndman2021forecasting}.
+
+Modelos de referência, também denominados \textit{baselines}, são utilizados para determinar um nível básico de desempenho. Uma estratégia simples consiste em repetir o último valor observado, enquanto outra utiliza a média das observações disponíveis no conjunto de treinamento. A comparação com essas abordagens permite verificar se a utilização de modelos mais complexos produz redução efetiva dos erros de previsão \cite{hyndman2021forecasting}.
+
+A avaliação de previsões pode empregar métricas que representam diferentes características dos erros. Medidas como o erro absoluto médio (MAE) e a raiz do erro quadrático médio (RMSE) mantêm relação com a escala da variável prevista, enquanto métricas percentuais permitem interpretar o erro proporcional. Entretanto, métricas baseadas em divisões pelo valor observado exigem cautela quando a série contém valores iguais ou próximos de zero \cite{hyndman2006measures}.
+
+\section{Trabalhos relacionados}
+
+Abordagens de ML foram utilizadas para analisar a distribuição espacial dos sinistros e identificar locais com maior concentração de ocorrências \cite{santos2021machine}. Apesar de utilizar registros históricos, essa aplicação possui caráter predominantemente espacial e difere de problemas voltados à previsão temporal de contagens.
+
+No contexto das rodovias brasileiras, técnicas de ML também foram empregadas para classificar as causas de sinistros ocorridos em Minas Gerais \cite{silva2024classificacao} e para predizer a gravidade de ocorrências registradas em rodovias do Rio de Janeiro \cite{mafort2025tecnicas}. Esses estudos tratam cada sinistro como uma observação e buscam atribuir uma categoria à ocorrência, diferentemente da previsão de uma quantidade mensal agregada.
+
+A evolução temporal das consequências dos sinistros nas rodovias federais brasileiras foi analisada considerando as mudanças no número de vítimas antes e depois da Década de Ação pela Segurança no Trânsito \cite{moraisneto2021tendencia}. Essa análise demonstra a relevância da dimensão temporal para a compreensão da segurança viária, embora seu objetivo esteja relacionado à identificação de tendências, e não à produção de previsões mensais.
+
+Em uma aplicação diretamente relacionada à previsão de contagens, modelos ARIMA foram utilizados para estimar as quantidades mensais de sinistros, ocorrências fatais e casos com vítimas na região de Amhara, na Etiópia \cite{getahun2021timeseries}. Os registros foram analisados de forma agregada para a região, sem a construção de séries específicas por município e sem a comparação com algoritmos de ML.
+
+O Quadro~\ref{tab:comparacao-trabalhos} sintetiza as principais diferenças entre os estudos relacionados e a proposta deste artigo.
+
+\begin{table*}[ht]
+\centering
+\caption{Comparação entre os trabalhos relacionados e o presente estudo}
+\label{tab:comparacao-trabalhos}
+\resizebox{\textwidth}{!}{
+\begin{tabular}{|p{3.0cm}|p{2.7cm}|p{3.0cm}|p{3.0cm}|p{3.2cm}|}
+\hline
+\textbf{Estudo} &
+\textbf{Problema investigado} &
+\textbf{Recorte ou unidade de análise} &
+\textbf{Abordagem} &
+\textbf{Diferença em relação ao presente estudo} \\
+\hline
+\cite{santos2021machine} &
+Identificação de pontos críticos &
+Distribuição espacial dos sinistros &
+Técnicas de ML &
+Concentra-se na análise espacial, e não na previsão mensal por município. \\
+\hline
+\cite{silva2024classificacao} &
+Classificação das causas dos sinistros &
+Ocorrências em rodovias de Minas Gerais &
+Técnicas de ML para classificação &
+Prevê categorias associadas às ocorrências individuais, e não quantidades futuras. \\
+\hline
+\cite{mafort2025tecnicas} &
+Predição da gravidade dos sinistros &
+Ocorrências em rodovias do Rio de Janeiro &
+Técnicas de ML para classificação &
+Tem como variável de resposta a gravidade de cada ocorrência. \\
+\hline
+\cite{moraisneto2021tendencia} &
+Análise de tendências no número de vítimas &
+Rodovias federais brasileiras &
+Análise temporal &
+Analisa tendências históricas, mas não produz previsões mensais por município. \\
+\hline
+\cite{getahun2021timeseries} &
+Previsão da quantidade mensal de sinistros &
+Região de Amhara, Etiópia &
+Modelos ARIMA &
+Realiza previsão regional agregada, sem séries municipais ou comparação com algoritmos de ML. \\
+\hline
+Presente estudo &
+Previsão da quantidade de sinistros no mês seguinte &
+Municípios de Santa Catarina com registros em rodovias federais &
+Modelos de referência e algoritmos de ML com atributos temporais &
+Considera séries mensais por município e emprega validação temporal por janelas expansivas. \\
+\hline
+\end{tabular}
+}
+\end{table*}
+O presente estudo adota séries mensais por município, enquanto os trabalhos relacionados tratam de classificação, análise espacial ou previsão regional agregada. A comparação com modelos de referência e a validação temporal permitem avaliar essa proposta no recorte catarinense.
+
+\section{Metodologia}
+
+A pesquisa é aplicada e segue a \textit{Design Science Research Methodology} (DSRM), proposta por \cite{peffers2007dsrm}. Suas atividades orientaram a definição do problema, o desenvolvimento, a demonstração, a avaliação e a comunicação do artefato. A seção seguinte relaciona essas entregas às fases do CRISP-ML(Q).
+
+\subsection{Problema e objetivos da solução}
+
+O problema foi delimitado como a previsão da quantidade de sinistros no mês seguinte nas rodovias federais de cada município de Santa Catarina. A solução deveria transformar registros individuais em observações mensais, construir atributos históricos, comparar modelos e disponibilizar as previsões em uma aplicação. Os experimentos deveriam preservar a ordem temporal dos dados e permitir sua reprodução.
+
+\subsection{Coleta e preparação dos dados}
+
+Foram utilizados os microdados abertos da PRF referentes a janeiro de 2022 a maio de 2026 \cite{prf2026dados}. A base filtrada para Santa Catarina reuniu 35.497 ocorrências, distribuídas em 127 municípios e 11 rodovias federais. As datas foram padronizadas e os nomes dos municípios foram convertidos para caixa baixa, com remoção de acentos.
+
+Os registros foram agregados por município e mês, tendo como alvo a quantidade de sinistros (\texttt{qtd\_acidentes}). Para manter séries contínuas, os meses sem registros dentro do período observado receberam valor zero. Foram criadas defasagens de um, dois e doze meses, médias móveis de três e seis meses, acumulado do ano até o mês anterior, média histórica do município e variáveis de calendário. O indicador de alta temporada abrange dezembro, janeiro, fevereiro e julho.
+
+Os atributos históricos utilizam somente meses anteriores ao previsto. Contagens de mortos, feridos e veículos do próprio mês foram excluídas das entradas do modelo implantado, pois não estariam disponíveis no momento da previsão. O município foi codificado por \textit{one-hot}, e o pré-processamento foi ajustado apenas com os dados de treinamento de cada janela.
+
+\subsection{Modelagem e avaliação}
+
+Foram implementados dois modelos de referência: a média do conjunto de treinamento (DummyMedia) e a repetição do último mês (NaiveUltimoMes). Também foram avaliados Regressão Ridge, Regressão de Poisson, Random Forest e HistGradientBoosting. A modelagem utilizou um modelo global para os municípios, com diferentes conjuntos de atributos. Os experimentos com componentes aleatórios utilizaram semente igual a 42.
+
+A avaliação empregou quatro janelas expansivas: treinamento em 2022 e teste em 2023; treinamento até 2023 e teste em 2024; treinamento até 2024 e teste em 2025; e treinamento até 2025 e teste de janeiro a maio de 2026. Em cada janela, os modelos foram ajustados novamente com os dados anteriores ao período de teste. As métricas utilizadas estão descritas na seção~\ref{sec:metricas}.
+
+\subsection{Demonstração e comunicação}
+
+O pipeline Random Forest selecionado foi exportado e integrado a uma aplicação Streamlit para consultas por município e mês. O código e as bases processadas foram disponibilizados em repositório público. Este artigo descreve os procedimentos e as limitações do projeto; a implantação do MVP e o plano de manutenção são apresentados a seguir.
+
+\section{Adequação do projeto ao CRISP-ML(Q)}
+\label{sec:crispmlq}
+
+O CRISP-ML(Q) organiza o ciclo de vida de aplicações de Aprendizado de Máquina em seis fases, com controles de qualidade em cada etapa \cite{studer2021crispmlq}. Neste projeto, ele complementa a DSRM e relaciona a preparação dos dados e a modelagem das Sprints anteriores ao MVP entregue nesta Sprint.
+
+\subsection{Compreensão do negócio e dos dados}
+
+O projeto busca apoiar o planejamento preventivo da segurança viária por meio da previsão mensal de sinistros nas rodovias federais dos municípios catarinenses. Nas Sprints anteriores, foram definidos a variável-alvo, o recorte de janeiro de 2022 a maio de 2026 e os 127 municípios presentes na base da PRF. A análise exploratória permitiu examinar a distribuição das ocorrências e as diferenças entre municípios.
+
+Os dados representam ocorrências registradas pela PRF, conforme a documentação oficial \cite{prf2026portal}. Por isso, o MVP informa que suas estimativas se referem às rodovias federais, e não a todos os sinistros de cada município. O desempenho técnico é avaliado pelo erro de previsão; a contribuição para decisões de órgãos públicos ainda não foi medida.
+
+\subsection{Preparação dos dados}
+
+Esta fase corresponde aos notebooks de limpeza e construção do \textit{snapshot}, que produziram as bases processadas utilizadas no treinamento e no MVP. Os registros foram filtrados para Santa Catarina, padronizados e agregados por município e mês. A aplicação utiliza essa base para calcular os atributos a partir do município e do mês informados pelo usuário.
+
+O principal controle é o uso exclusivo de dados anteriores ao mês previsto. Também são excluídas as linhas posteriores a maio de 2026 que a grade mensal do \textit{snapshot} preencheu com zero. A aplicação verifica histórico insuficiente, meses ausentes, duplicidades e contagens inválidas. Um teste automatizado compara os atributos da inferência com os utilizados no treinamento.
+
+\subsection{Engenharia de modelagem}
+
+Nas Sprints anteriores, foram comparados modelos de referência e quatro algoritmos supervisionados. O Random Forest com calendário, defasagens e município apresentou o menor MAE médio entre as configurações avaliadas e foi exportado como versão v1. O ajuste final utilizou 6.731 observações mensais, com semente aleatória igual a 42.
+
+O artefato reúne o pré-processamento e o modelo em um pipeline \texttt{joblib}. Seus metadados registram atributos, período de treinamento e métricas. Nesta Sprint, o MVP passou a consumir esse artefato, verificando a correspondência entre as entradas e as colunas esperadas. O código, o modelo e as versões das dependências foram registrados no GitHub para permitir a reprodução da aplicação.
+
+\subsection{Avaliação}
+
+A avaliação utilizou janelas temporais expansivas, com testes em 2023, 2024, 2025 e de janeiro a maio de 2026. A versão implantada obteve MAE médio de 1,76 sinistro, RMSE de 2,76 sinistros, WAPE de 32,60\% e $R^2$ de 0,906. São médias dos backtests, calculados com histórico observado anterior a cada mês previsto. As consultas históricas do MVP usam o modelo final, já treinado nesses períodos, e não constituem uma nova avaliação independente.
+
+Nesta Sprint, cinco testes verificaram os atributos, a previsão direta, o tratamento de entradas inválidas, a ausência de vazamento temporal nas entradas e a interação do formulário. Após o deploy, foram conferidos a previsão e o gráfico online. Ainda é necessário analisar os erros por município e por faixa de contagem, pois as métricas agregadas podem ocultar diferenças de desempenho.
+
+\subsection{Implantação}
+
+O MVP foi desenvolvido em Streamlit e publicado no Streamlit Community Cloud em 6 de outubro de 2026. O acesso público está disponível em \url{https://acidentes-sc-pgp.streamlit.app/}. O usuário seleciona município e mês e recebe a estimativa, o gráfico do histórico e a opção de baixar o resultado em CSV. A interface também apresenta a versão do modelo e suas métricas de validação.
+
+A aplicação utiliza Python 3.12, o modelo v1 e os dados versionados no repositório \url{https://github.com/dreyrobert/pgp_machine_learning}, que contém as instruções de uso e deploy. Como a base termina em maio de 2026, a previsão futura disponível é junho de 2026. Os controles incluem dependências fixadas, cache de carregamento e mensagens para falhas na leitura dos arquivos. O acesso público e a geração de previsões com visualização atendem aos requisitos da entrega desta Sprint.
+
+\subsection{Monitoramento e manutenção}
+
+O CRISP-ML(Q) inclui o acompanhamento do modelo após a implantação \cite{studer2021crispmlq}. Atualmente, o projeto mantém metadados, testes e histórico de commits, mas ainda não possui detecção automática de \textit{drift}, alertas ou retreinamento agendado. Essa etapa permanece como trabalho futuro.
+
+A proposta é incorporar cada novo mês completo da PRF, verificar a qualidade dos dados e comparar previsões previamente registradas com os valores observados. MAE, RMSE e WAPE deverão ser acompanhados por período e município, incluindo a comparação com a repetição do último mês. Alterações persistentes no desempenho deverão motivar a revisão dos dados e a avaliação de uma nova versão por validação temporal. Os critérios de alerta ainda precisam ser definidos. A versão anterior deverá ser preservada para permitir retorno em caso de falhas, considerando os riscos de manutenção associados a dados e configurações de sistemas de ML \cite{sculley2015debt}.
+
+\begin{comment}
+Foram implementados dois modelos de referência: a média histórica do conjunto de treinamento (\textit{DummyMean}) e a repetição do valor observado no mês anterior (\textit{NaiveUltimoMes}). Também foram avaliados os algoritmos Regressão Ridge, Regressão de Poisson, Random Forest Regressor e HistGradientBoosting Regressor. A dependência temporal foi representada por atributos de calendário, valores defasados e médias móveis. Não foram implementados modelos específicos de séries temporais, como ARIMA, Prophet ou redes LSTM.
+
+A demonstração foi realizada utilizando os registros dos 127 municípios catarinenses presentes na base processada. Como parte dessa etapa, uma aplicação de visualização foi utilizada para apresentar as previsões e permitir a consulta às estimativas produzidas pelo artefato.
+
+A avaliação empregou validação temporal por janelas expansivas. Foram consideradas quatro divisões: treinamento com os dados de 2022 e teste em 2023; treinamento entre 2022 e 2023 e teste em 2024; treinamento entre 2022 e 2024 e teste em 2025; e treinamento entre 2022 e 2025 e teste entre janeiro e maio de 2026. Em cada divisão, os modelos foram ajustados novamente utilizando somente as observações anteriores ao respectivo período de teste.
+
+O desempenho foi mensurado pelo erro absoluto médio (MAE), pela raiz do erro quadrático médio (RMSE), pelo erro percentual absoluto médio calculado somente para observações não nulas (MAPE sem zeros), pelo erro percentual absoluto ponderado (WAPE) e pelo coeficiente de determinação ($R^2$). Essas métricas foram calculadas separadamente para cada janela temporal, permitindo comparar os modelos em diferentes períodos.
+
+Por fim, a comunicação compreende a descrição do problema, do artefato, dos procedimentos metodológicos, dos resultados e das limitações neste artigo. Também contempla a disponibilização dos códigos, dos dados processados e dos demais artefatos cuja publicação seja permitida.
+
+\section{Dados}
+\label{sec:dados}
+
+Foram utilizados os dados abertos de sinistros de trânsito disponibilizados pela Polícia Rodoviária Federal (PRF) \cite{prf2026dados}. A análise considerou os arquivos anuais em formato CSV agrupados por ocorrência, pois a variável de interesse corresponde à quantidade de sinistros, e não ao número de pessoas ou veículos envolvidos.
+
+O recorte compreendeu os registros de Santa Catarina entre janeiro de 2022 e maio de 2026. Após a aplicação desses critérios, a base apresentou 35.497 ocorrências distribuídas entre 127 municípios e 11 rodovias federais.
+
+Os arquivos originais possuem uma observação para cada ocorrência. Para a modelagem, os registros foram agrupados por município e mês, de modo que cada observação passou a representar a quantidade mensal de sinistros registrada nas rodovias federais de determinado município.
+
+Como possível extensão, poderão ser incorporados dados de volume de tráfego do Plano Nacional de Contagem de Tráfego (PNCT), disponibilizados pelo Departamento Nacional de Infraestrutura de Transportes (DNIT) \cite{dnit2026pnct}. A utilização dessa fonte dependerá da compatibilidade espacial e temporal com os dados da PRF.
+
+\section{Pré-processamento}
+\label{sec:preprocessamento}
+
+O pré-processamento começou com a integração dos cinco arquivos anuais da PRF e a seleção dos registros referentes a Santa Catarina. A data de cada ocorrência foi padronizada para permitir a identificação do ano e do mês. Também foram normalizados os campos textuais, corrigidos os tipos das variáveis e removidas as colunas que não seriam utilizadas nas análises.
+
+Em seguida, os registros foram agrupados por município, ano e mês. A quantidade de ocorrências em cada grupo originou a variável-alvo \texttt{qtd\_acidentes}. Para manter a continuidade das séries, foram incluídas todas as combinações mensais do período analisado. Os meses sem ocorrências registradas receberam valor igual a zero. Essa decisão considera que, dentro do período coberto pelos arquivos, a ausência de um registro corresponde à ausência de sinistro registrado pela PRF. A base foi limitada a maio de 2026, último mês disponível na data da coleta.
+
+A partir da base mensal, foram criados atributos de calendário, como ano, mês, trimestre, índice temporal e indicador de alta temporada. O mês também foi representado por transformações cíclicas de seno e cosseno, utilizadas para indicar ao modelo que meses como dezembro e janeiro estão temporalmente próximos. O indicador de alta temporada foi aplicado aos meses de dezembro, janeiro, fevereiro e julho, correspondentes ao verão e ao período de férias de julho.
+
+Também foram construídos atributos baseados no histórico de cada município, incluindo as quantidades observadas um, dois e doze meses antes, médias móveis de três e seis meses, quantidade acumulada no ano e média histórica. Esses atributos permitem representar o comportamento recente e possíveis padrões sazonais das séries. Os valores ausentes gerados no início de cada série foram preenchidos com zero.
+
+O município foi tratado como atributo categórico por meio de codificação \textit{one-hot}. Os atributos numéricos foram padronizados, e todas as transformações foram ajustadas novamente em cada janela temporal utilizando somente os dados de treinamento. Além disso, variáveis referentes ao próprio mês previsto, como as quantidades de mortos, feridos e veículos envolvidos, não foram utilizadas diretamente, pois ainda não estariam disponíveis no momento da previsão. Essas medidas foram adotadas para evitar o vazamento de dados.
+
+\section{Modelos}
+\label{sec:modelos}
+
+A modelagem foi formulada como um problema de regressão supervisionada global. Um único modelo foi treinado com as observações dos 127 municípios, sendo o município incluído como atributo categórico. Cada linha representa um município em determinado mês, e a variável-alvo corresponde à quantidade de sinistros registrada nesse período. Para produzir a estimativa, os modelos utilizaram atributos de calendário do mês previsto e atributos históricos calculados somente com dados dos meses anteriores.  Embora o problema possua natureza temporal, não foram implementados modelos específicos como ARIMA, Prophet ou redes LSTM. A dependência temporal foi representada por valores defasados, médias móveis, atributos de calendário e validação temporal por janelas expansivas.
+
+Inicialmente, foram implementados dois modelos de referência. O modelo \texttt{DummyMedia} utiliza como previsão a média histórica da variável-alvo no conjunto de treinamento. O modelo \texttt{NaiveUltimoMes}, por sua vez, repete a quantidade registrada no mês anterior para o mesmo município. Esses modelos fornecem níveis básicos de comparação e permitem verificar se os algoritmos supervisionados produzem ganhos em relação a estratégias simples de previsão.
+
+Entre os modelos supervisionados, foi utilizada a Regressão Ridge, que adiciona uma penalização quadrática aos coeficientes do modelo linear, contribuindo para reduzir sua sensibilidade à presença de atributos correlacionados \cite{hoerl1970ridge}. Também foi avaliada a Regressão de Poisson, pertencente à família dos modelos lineares generalizados e adequada à modelagem de variáveis de contagem \cite{nelder1972generalized}.
+
+Foram avaliados ainda dois algoritmos baseados em árvores. O Random Forest Regressor combina as previsões produzidas por diversas árvores construídas a partir de amostras e subconjuntos de atributos, buscando reduzir a variância em relação a uma única árvore de decisão \cite{breiman2001random}. O HistGradientBoosting Regressor constrói árvores sequencialmente, de modo que cada nova árvore busca reduzir os erros produzidos pelo conjunto anterior. O modelo segue os princípios dos métodos de \textit{gradient boosting} \cite{friedman2001greedy} e utiliza a discretização dos atributos numéricos em intervalos para tornar o treinamento mais eficiente.
+
+Foram comparados quatro conjuntos de atributos. O conjunto \texttt{calendario} incluiu apenas variáveis relacionadas ao período da previsão. O conjunto \texttt{calendario\_lags} acrescentou os valores defasados e as médias móveis da quantidade de sinistros. O conjunto \texttt{calendario\_lags\_municipio} adicionou o município como variável categórica. Por fim, o conjunto \texttt{completo\_historico} incorporou atributos históricos relacionados à severidade e aos veículos envolvidos. O modelo de referência \texttt{NaiveUltimoMes} foi avaliado separadamente por meio do valor de \texttt{lag\_acidentes\_1m}.
+
+A avaliação foi realizada por meio de validação temporal com janelas expansivas. Foram utilizadas quatro divisões: treinamento em 2022 e teste em 2023; treinamento entre 2022 e 2023 e teste em 2024; treinamento entre 2022 e 2024 e teste em 2025; e treinamento entre 2022 e 2025 e teste entre janeiro e maio de 2026. Em cada divisão, o conjunto de treinamento foi ampliado com os períodos anteriores, enquanto o teste permaneceu restrito ao período posterior.
+
+Os hiperparâmetros foram definidos manualmente, sem a aplicação de busca em grade, busca aleatória ou outro procedimento de otimização automática. Na Regressão Ridge, foi utilizado $\alpha=5{,}0$. A Regressão de Poisson foi configurada com $\alpha=0{,}1$ e limite de 2.000 iterações.
+
+Após a geração das estimativas, previsões inferiores a zero foram limitadas a zero, uma vez que a variável-alvo representa uma contagem não negativa. As previsões foram mantidas como valores contínuos e não foram arredondadas para números inteiros antes do cálculo das métricas.
+
+O Random Forest Regressor foi configurado com 250 árvores, número mínimo de duas observações por folha, seleção de atributos pela raiz quadrada da quantidade disponível e semente aleatória igual a 42. Foram mantidos os valores padrão para profundidade máxima e número mínimo de observações necessárias para dividir um nó. O HistGradientBoosting Regressor utilizou função de perda quadrática, taxa de aprendizado de 0,06, 300 iterações, regularização $L_2$ igual a 0,1 e semente aleatória igual a 42. Os demais parâmetros foram mantidos nos valores padrão da biblioteca.
+
+Essa estratégia preserva a ordem cronológica e impede que registros posteriores ao período de teste sejam utilizados no treinamento. O embaralhamento aleatório das observações não foi empregado, pois poderia introduzir informações futuras na construção dos modelos e produzir estimativas otimistas de desempenho. A necessidade de considerar a dependência e a ordenação temporal durante a validação é discutida por \cite{bergmeir2018crossvalidation}.
+\end{comment}
+
+
+\section{Métricas de avaliação}
+\label{sec:metricas}
+
+Os modelos foram comparados por MAE, RMSE, MAPE, WAPE e $R^2$ \cite{hyndman2006measures}. As métricas foram calculadas em cada janela temporal e resumidas pela média dos quatro períodos de teste.
+
+O MAE expressa o erro médio em número de sinistros. O RMSE mantém essa unidade, mas atribui maior peso aos erros elevados. Ambas as medidas devem ser minimizadas.
+
+O MAPE foi calculado somente para observações com pelo menos um sinistro, pois envolve divisão pelo valor observado. Como contagens baixas podem gerar percentuais elevados mesmo com pequenos erros absolutos, essa métrica foi utilizada como medida complementar. O WAPE relaciona a soma dos erros absolutos ao total de sinistros e inclui meses com contagem zero, desde que o total do período seja positivo.
+
+O $R^2$ compara os erros do modelo à variação dos valores observados em torno de sua média. Valores próximos de um indicam melhor ajuste; valores negativos indicam desempenho inferior à previsão pela média do conjunto avaliado.
+
+A comparação priorizou menores valores de MAE e WAPE, pela interpretação do erro absoluto e pela presença de meses sem registros. RMSE, MAPE e $R^2$ complementaram a análise.
+
+\bibliographystyle{sbc}
+\bibliography{sbc-template,crisp-ml-references}
+
+\end{document}
