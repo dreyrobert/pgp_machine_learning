@@ -125,3 +125,74 @@ python3 src/train_export_model.py
 - Modelos treinados, avaliados e comparados;
 - Painéis ou aplicação web para visualização histórica e preditiva;
 - Documentação técnica e científica do projeto.
+
+## Aplicação Streamlit (MVP)
+
+A aplicação consome o pipeline Random Forest v1 já exportado, sem retreinamento.
+Selecione o município e o mês e clique em **Gerar previsão**. O resultado inclui
+estimativa mensal, gráfico dos últimos 24 meses disponíveis até a referência,
+download CSV e informações da versão e dos backtests.
+
+### Instalação e execução
+
+Use Python 3.12. O scikit-learn está fixado em 1.9.0, versão registrada no
+artefato serializado, para manter compatibilidade ao carregar o modelo.
+
+```bash
+uv venv .venv --python 3.12
+uv pip install --python .venv/bin/python -r requirements.txt
+.venv/bin/python -m streamlit run app.py
+```
+
+Abra o endereço local mostrado pelo Streamlit, normalmente http://localhost:8501.
+Alternativa sem uv: crie o ambiente com `python3.12 -m venv .venv` e instale
+com `.venv/bin/python -m pip install -r requirements.txt`.
+
+### Escopo e interpretação
+
+- Unidade da previsão: total mensal de acidentes nas rodovias federais de um município de SC.
+- Histórico utilizado: janeiro/2022 a maio/2026, conforme os metadados da v1.
+- Consultas disponíveis: janeiro/2023 a junho/2026, com pelo menos 12 meses de histórico.
+- Junho/2026 é o primeiro mês após o corte da base; não é uma previsão do próximo mês da data atual.
+- O snapshot possui meses posteriores ao corte preenchidos com zero. A aplicação exclui essas linhas; elas não são observações reais.
+- Os atributos são calculados apenas com meses anteriores à referência e reproduzem o treinamento.
+- Consultas históricas usam o modelo final, treinado nesses períodos. Seus resultados não constituem teste independente nem substituem os backtests.
+- A saída é uma estimativa de contagem, não uma probabilidade ou intervalo de confiança. As métricas exibidas são médias dos backtests anuais.
+- O MVP oferece apenas um passo futuro. Para avançar além disso, será necessário atualizar o histórico e versionar os artefatos ou definir uma estratégia de previsão recursiva.
+
+### Estrutura e validação
+
+- `app.py`: interface, gráfico e exportação CSV.
+- `src/inference.py`: carregamento e validação do modelo, metadados e histórico.
+- `src/prediction_features.py`: construção dos atributos de inferência.
+- `tests/test_inference.py`: equivalência com o treinamento, prevenção de vazamento nas entradas, previsão direta, entradas inválidas e interação Streamlit.
+
+```bash
+.venv/bin/python -m unittest discover -s tests -v
+```
+
+A aplicação requer o modelo `.joblib`, seu JSON de metadados e
+`data/processed/snapshot_acidentes.parquet`. Se algum arquivo estiver ausente,
+a tela apresenta uma mensagem de erro. Os caminhos são resolvidos a partir
+do projeto, independentemente do diretório de execução. Modelo e dados usam
+cache invalidado quando os arquivos mudam.
+
+## Deploy no Streamlit Community Cloud
+
+O repositório público é https://github.com/dreyrobert/pgp_machine_learning.
+O link público da aplicação será registrado aqui após a confirmação do deploy.
+
+1. Acesse https://share.streamlit.io/ e entre na conta vinculada ao GitHub.
+2. Selecione **Create app** e a opção de deploy a partir de um repositório existente.
+3. Configure **Repository**: `dreyrobert/pgp_machine_learning`, **Branch**: `main`, **Main file path**: `app.py`.
+4. Em **Advanced settings**, selecione **Python 3.12**. A aplicação não exige secrets.
+5. Clique em **Deploy** e aguarde a instalação das dependências.
+6. Verifique uma previsão, a troca de município, o gráfico e o download CSV no endereço público.
+7. Nas configurações de compartilhamento, confirme que qualquer pessoa pode visualizar o app e registre o endereço público neste README.
+
+Os arquivos do modelo e do histórico estão versionados no repositório e são
+carregados diretamente pela aplicação. As dependências de inferência e interface
+estão fixadas nas versões validadas localmente em `requirements.txt`.
+Novos commits na branch de deploy são utilizados pelo Community Cloud para
+atualizar a aplicação. Consulte a
+[documentação oficial de deploy](https://docs.streamlit.io/deploy/streamlit-community-cloud/deploy-your-app/deploy).
