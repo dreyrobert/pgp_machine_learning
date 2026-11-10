@@ -51,14 +51,16 @@ class InferenceTests(unittest.TestCase):
     def test_streamlit_submission_and_change(self):
         app = AppTest.from_file(str(ROOT / 'app.py'), default_timeout=30).run()
         self.assertFalse(app.exception)
-        self.assertEqual(len(app.selectbox), 2)
+        self.assertEqual(len(app.selectbox), 3)
         app.button[0].click().run()
         self.assertFalse(app.exception)
         self.assertIn('result', app.session_state)
         self.assertTrue(app.metric)
-        city = app.selectbox[0].options[-1]
-        app.selectbox[0].select(city)
-        app.selectbox[1].select(pd.Timestamp('2025-01-01'))
+        prediction_city = next(box for box in app.selectbox if box.label == 'Município')
+        prediction_month = next(box for box in app.selectbox if box.label == 'Mês de referência')
+        city = prediction_city.options[-1]
+        prediction_city.select(city)
+        prediction_month.select(pd.Timestamp('2025-01-01'))
         app.button[0].click().run()
         self.assertFalse(app.exception)
         self.assertEqual(app.session_state['result'][0], city)

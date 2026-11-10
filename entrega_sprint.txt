@@ -1,0 +1,26 @@
+ENTREGA DA SPRINT - 10/11/2026
+Projeto: Predição de acidentes nas rodovias federais de Santa Catarina
+Autores: Robert Biasoli Drey e Gabrielli Grossi Lara
+
+1. Melhorias implementadas no modelo e/ou no MVP
+O modelo Random Forest v1 foi mantido, sem novo treinamento. O MVP foi ampliado com a comparação entre os modelos avaliados, a redução de 20,7% no MAE médio em relação à repetição do último mês e a consulta dos erros dos backtests por município e faixa de contagem. A aplicação também permite consultar estimativas mensais por município, visualizar o histórico e baixar o resultado em CSV. Foram mantidas as validações de entradas e histórico, o tratamento de erros e os testes de equivalência entre treinamento e inferência.
+
+2. MVP público
+https://acidentes-sc-pgp.streamlit.app/
+O endereço respondeu em 10/11/2026, mas redirecionou para a tela de autenticação do Streamlit. É necessário conferir nas configurações do Community Cloud se o acesso está liberado para qualquer pessoa e publicar a versão atualizada da branch de deploy.
+O modelo utiliza dados de janeiro/2022 a maio/2026 e permite uma previsão futura para junho/2026. Consultas históricas não constituem avaliação independente.
+
+3. Repositório GitHub
+https://github.com/dreyrobert/pgp_machine_learning
+O repositório local contém a atualização do artigo, do MVP, da documentação e das análises de erro. Falta revisar as alterações, criar o commit e enviar para a branch main para que apareçam no GitHub e no Streamlit Community Cloud.
+
+4. Artigo científico
+Link compartilhado: https://www.overleaf.com/project/6a7bbc6281200365ac30f4a1/share#7e54bbfafd613b91361dd05f35fc2584edc76b142ffc065b
+Fonte local mais recente: article/fourfh_version.tex.
+O artigo foi atualizado localmente com Resumo, Abstract, Resultados, Discussão, Limitações e Conclusão. Foram incluídos MAE médio de 1,756; RMSE médio de 2,764; WAPE médio de 32,60%; R² médio de 0,906; comparação com os modelos de referência; desempenho por janela; e análise dos erros por município e faixa de contagem. O MAE médio foi 20,7% menor que o da repetição do último mês. Esses resultados pertencem aos experimentos já realizados.
+As limitações registradas incluem o recorte da PRF nas rodovias federais de SC, a base encerrada em maio/2026, a ausência de medidas de exposição ao tráfego, a falta de avaliação com usuários, a seleção e avaliação nas mesmas janelas e a ausência de monitoramento e retreinamento automáticos.
+
+PENDÊNCIAS ANTES DO ENVIO
+1. Sincronizar os arquivos atualizados com o projeto do Overleaf.
+2. Revisar, criar o commit e enviar as alterações ao GitHub.
+3. Confirmar que o Streamlit Community Cloud atualizou a aplicação e está com acesso público.

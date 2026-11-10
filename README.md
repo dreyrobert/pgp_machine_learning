@@ -29,12 +29,12 @@ Desenvolver, validar e publicar uma solução tecnológica baseada em Aprendizad
 ### Objetivos específicos
 
 - Extrair, limpar e filtrar os microdados abertos da PRF referentes ao estado de Santa Catarina;
-- Unificar e estruturar registros de acidentes por ocorrência e por pessoa envolvida, quando aplicável;
+- Consolidar os registros agrupados por ocorrência;
 - Realizar análise exploratória dos dados e identificar padrões temporais, sazonais e geográficos;
-- Mapear rodovias e trechos críticos, com atenção a eixos como BR-101, BR-470, BR-282 e BR-116;
+- Examinar a distribuição dos registros por rodovia e município;
 - Criar variáveis temporais relevantes para o problema de previsão;
-- Treinar e comparar modelos supervisionados e modelos de séries temporais;
-- Avaliar os modelos com métricas como MAE, RMSE e MAPE;
+- Comparar modelos supervisionados com atributos temporais e modelos de referência;
+- Avaliar os modelos com MAE, RMSE, MAPE sem zeros, WAPE e R²;
 - Disponibilizar código-fonte, pipelines, documentação técnica e painéis de visualização;
 - Estruturar o projeto de acordo com os ritos e entregas da disciplina de Planejamento e Gestão de Projetos.
 
@@ -51,10 +51,10 @@ UF = SC
 O período histórico considerado no artigo compreende:
 
 ```text
-2022 a 2026
+janeiro de 2022 a maio de 2026
 ```
 
-Os arquivos anuais serão consolidados durante a etapa de preparação dos dados, formando uma base histórica única para análise exploratória, modelagem temporal e visualização.
+Os cinco arquivos anuais foram filtrados para SC e consolidados em 35.497 ocorrências, envolvendo 127 municípios e 11 rodovias federais. A grade de treinamento contém 6.731 observações de município-mês (53 meses por município).
 
 ## Escopo da previsão
 
@@ -64,38 +64,48 @@ O problema de Machine Learning foi delimitado da seguinte forma:
 |---|---|
 | Fonte dos dados | Polícia Rodoviária Federal (PRF) |
 | Tipo de dado | Dados abertos de acidentes de trânsito |
-| Período histórico | 2017-2026 |
+| Período histórico | Janeiro/2022 a maio/2026 |
 | Recorte geográfico | Santa Catarina |
 | Rodovias de interesse | BR-101, BR-470, BR-282, BR-116 e demais rodovias federais no estado |
-| Unidade espacial | Rodovias, trechos e localidades registradas nos dados |
-| Unidade temporal | Janelas temporais diárias, semanais e agregações exploratórias |
+| Unidade espacial | Município, considerando registros em rodovias federais |
+| Unidade temporal | Mensal |
 | Variável-alvo | Frequência de ocorrências de acidentes |
 | Abordagem | Predição temporal e análise de séries temporais |
 
-A unidade analítica poderá ser estruturada em diferentes granularidades conforme a etapa do projeto:
+Cada linha de modelagem representa um município e um mês. O alvo é a contagem de sinistros, e a previsão utiliza calendário, defasagens e médias do histórico anterior ao mês previsto.
 
-```text
-Rodovia | Trecho/Município | Data/Semana/Mês | Quantidade de acidentes
------------------------------------------------------------------------
-BR-101  | Município A      | 2024-01          | 15
-BR-470  | Município B      | 2024-02          | 8
-BR-282  | Município C      | 2024-03          | 12
+## Modelagem e resultados
+
+Foram comparados Ridge, Poisson, Random Forest e HistGradientBoosting, além da média do treinamento e da repetição do último mês. Não foram implementados ARIMA, Prophet, XGBoost ou LSTM.
+
+O treinamento de cada janela usa apenas anos anteriores ao teste: 2023, 2024, 2025 e janeiro a maio de 2026. O modelo é reajustado uma vez por janela; as entradas de cada mês de teste usam o histórico observado anterior, inclusive dentro do mesmo ano. Não se trata de previsão recursiva de um ano inteiro.
+
+| Modelo | MAE médio | RMSE médio | WAPE médio (%) |
+|---|---:|---:|---:|
+| Random Forest | 1,756 | 2,764 | 32,60 |
+| Ridge | 1,798 | 2,816 | 33,45 |
+| HistGradientBoosting | 1,897 | 3,046 | 35,25 |
+| Repetição do último mês | 2,215 | 3,535 | 41,07 |
+| Poisson | 2,484 | 4,148 | 46,11 |
+| Média do treinamento | 5,128 | 9,013 | 95,18 |
+
+Os algoritmos supervisionados da tabela usam calendário, histórico de sinistros e município. Os números são médias simples das quatro janelas, com o mesmo peso para cada período. O Random Forest reduziu o MAE médio em 20,7% em relação à repetição do último mês; a diferença para Ridge foi de 2,3%. Não foram realizados testes de significância.
+
+### Análise dos erros sem retreinamento
+
+```bash
+.venv/bin/python src/analyze_backtests.py
 ```
 
-## Modelagem
+O script verifica se as métricas calculadas sobre as predições coincidem com os resultados salvos e gera:
 
-O artigo prevê a comparação entre algoritmos supervisionados e modelos de séries temporais, incluindo possibilidades como:
+- `data/processed/erros_rf_por_municipio.csv`: erros das 5.207 previsões de teste por município.
+- `data/processed/erros_rf_por_faixa.csv`: erros por contagem observada (0, 1–5, 6–10, 11–20 e 21 ou mais).
+- `data/processed/backtest_rf_totais_mensais.csv`: totais mensais observados e previstos.
+- `docs/graphics/backtest_rf_municipios.png`: séries dos três municípios com maior total observado no teste.
+- `docs/graphics/backtest_rf_erros_faixa.png`: MAE por faixa de contagem.
 
-- XGBoost;
-- Random Forest;
-- Prophet;
-- Redes neurais recorrentes, como LSTM/RNN.
-
-A avaliação dos modelos deverá considerar métricas consolidadas para problemas de previsão, como:
-
-- MAE;
-- RMSE;
-- MAPE.
+Essas tabelas agrupam as previsões diretamente, sem média por janela. O viés é previsto menos observado; o WAPE fica vazio quando o total observado é zero. As faixas são definidas após o teste pelo valor observado. O modelo tende a superestimar contagens baixas e a subestimar contagens altas. Os dados e o modelo continuam na v1, sem novo treinamento nesta revisão.
 
 ## Modelo treinado exportado
 
@@ -131,7 +141,7 @@ python3 src/train_export_model.py
 A aplicação consome o pipeline Random Forest v1 já exportado, sem retreinamento.
 Selecione o município e o mês e clique em **Gerar previsão**. O resultado inclui
 estimativa mensal, gráfico dos últimos 24 meses disponíveis até a referência,
-download CSV e informações da versão e dos backtests.
+download CSV e informações da versão e dos backtests. Um painel adicional compara os modelos e permite consultar os erros por município e faixa de contagem.
 
 ### Instalação e execução
 
@@ -162,7 +172,8 @@ com `.venv/bin/python -m pip install -r requirements.txt`.
 
 ### Estrutura e validação
 
-- `app.py`: interface, gráfico e exportação CSV.
+- `app.py`: interface, gráfico, exportação CSV e painel de comparação e erros dos backtests.
+- `src/analyze_backtests.py`: análise reproduzível das predições salvas, sem retreinamento.
 - `src/inference.py`: carregamento e validação do modelo, metadados e histórico.
 - `src/prediction_features.py`: construção dos atributos de inferência.
 - `tests/test_inference.py`: equivalência com o treinamento, prevenção de vazamento nas entradas, previsão direta, entradas inválidas e interação Streamlit.
@@ -202,16 +213,24 @@ atualizar a aplicação. Consulte a
 
 ## Artigo científico
 
-O fonte atualizado do artigo está em
-[article/third_version.tex](article/third_version.tex), com a seção
-**Adequação do projeto ao CRISP-ML(Q)** imediatamente após a Metodologia.
-A seção relaciona as seis fases às entregas e ao MVP público, distinguindo
-os controles implementados das atividades propostas de monitoramento e manutenção.
+A versão atual está em [article/fourfh_version.tex](article/fourfh_version.tex). A revisão de 10/11/2026 inclui resumo e abstract, Resultados, Discussão, Limitações e Conclusão, além da correção das referências. Os resultados foram extraídos dos CSVs dos experimentos existentes.
 
-As novas referências estão em
-[article/crisp-ml-references.bib](article/crisp-ml-references.bib).
-Ao atualizar o projeto no Overleaf, copie ambos os arquivos. O LaTeX utiliza
-`\bibliography{sbc-template,crisp-ml-references}` e requer também os arquivos
-originais `sbc-template.sty`, `sbc.bst` e `sbc-template.bib`, que não estão
-incluídos neste repositório. O resumo e o abstract do fonte ainda contêm
-marcadores de atualização e precisam de revisão antes da versão final do artigo.
+O projeto LaTeX utiliza `article/referencias.bib`, `article/crisp-ml-references.bib`, `article/sbc-template.sty` e `article/sbc.bst`. Os estilos SBC foram obtidos do [template do SBGames](https://www.sbgames.org/arquivos/Template_SBC/template-latex/). As figuras usadas pelo artigo estão em `docs/graphics/`. Preserve a estrutura das pastas ao importar no Overleaf e selecione `article/fourfh_version.tex` como documento principal.
+
+Com uma distribuição LaTeX instalada:
+
+```bash
+cd article
+pdflatex fourfh_version.tex
+bibtex fourfh_version
+pdflatex fourfh_version.tex
+pdflatex fourfh_version.tex
+```
+
+O artigo apresenta os limites da seleção pelas mesmas janelas de avaliação, do horizonte de um mês, da ausência de exposição ao tráfego e da falta de avaliação com usuários. Atualização dos dados, teste posterior ao corte, monitoramento e retreinamento continuam pendentes.
+
+## Revisão de 10/11/2026 e publicação
+
+As melhorias locais desta revisão são o painel de comparação e erros no MVP, as análises por município e faixa e a atualização do artigo e da documentação. A versão pública só recebe essas mudanças após a publicação na branch `main`. O endereço registrado do MVP é https://acidentes-sc-pgp.streamlit.app/; a disponibilidade online e a versão implantada devem ser conferidas antes da entrega.
+
+O texto básico para a entrega está em `entrega_sprint.txt` e contém o link compartilhado do artigo. Commit, push e sincronização do Overleaf não são executados pelo script de análise.
